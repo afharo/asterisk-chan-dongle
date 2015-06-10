@@ -1,9 +1,9 @@
-/* 
+/*
    Copyright (C) 2009 - 2010
-   
+
    Artem Makhutov <artem@makhutov.org>
    http://www.makhutov.org
-   
+
    Dmitry Vagin <dmitry2004@yandex.ru>
 
    bg <bg_one@mail.ru>
@@ -46,7 +46,7 @@ static const char cmd_ddsetex2[] = "AT^DDSETEX=2\r";
 static int at_fill_generic_cmd_va (at_queue_cmd_t * cmd, const char * format, va_list ap)
 {
 	char buf[4096];
-	
+
 	cmd->length = vsnprintf (buf, sizeof(buf)-1, format, ap);
 
 	buf[cmd->length] = 0;
@@ -126,7 +126,7 @@ EXPORT_DEF int at_enque_initialization(struct cpvt* cpvt, at_cmd_t from_command)
 	static const char cmd13[] = "AT+COPS=0,0\r";
 	static const char cmd14[] = "AT+CREG=2\r";
 	static const char cmd15[] = "AT+CREG?\r";
-	static const char cmd16[] = "AT+CNUM\r";
+//	static const char cmd16[] = "AT+CNUM\r";
 
 	static const char cmd17[] = "AT^CVOICE?\r";
 //	static const char cmd18[] = "AT+CLIP=0\r";
@@ -155,7 +155,7 @@ EXPORT_DEF int at_enque_initialization(struct cpvt* cpvt, at_cmd_t from_command)
 
 		ATQ_CMD_DECLARE_STI(CMD_AT_CREG_INIT,cmd14),	/* GSM registration status setting */
 		ATQ_CMD_DECLARE_ST(CMD_AT_CREG, cmd15),		/* GSM registration status */
-		ATQ_CMD_DECLARE_ST(CMD_AT_CNUM, cmd16),		/* Get Subscriber number */
+//		ATQ_CMD_DECLARE_ST(CMD_AT_CNUM, cmd16),		/* disabled Some SIMs return ERROR to this message and most of them doesn't show any number Get Subscriber number */
 		ATQ_CMD_DECLARE_ST(CMD_AT_CVOICE, cmd17),	/* read the current voice mode, and return sampling rate、data bit、frame period */
 
 		ATQ_CMD_DECLARE_ST(CMD_AT_CSCA, cmd6),		/* Get SMS Service center address */
@@ -255,7 +255,7 @@ EXPORT_DEF int at_enque_pdu(struct cpvt * cpvt, const char * pdu, attribute_unus
 	size_t pdulen = length;
 
 	int scalen = pdu_parse_sca(&ptr, &pdulen);
-	
+
 	if(scalen < 2 || length % 2 != 0)
 	{
 		return -EINVAL;
@@ -263,7 +263,7 @@ EXPORT_DEF int at_enque_pdu(struct cpvt * cpvt, const char * pdu, attribute_unus
 
 	at_cmd[1].data = ast_malloc(length + 2);
 	if(!at_cmd[1].data)
-	{		
+	{
 		return -ENOMEM;
 	}
 
@@ -272,15 +272,15 @@ EXPORT_DEF int at_enque_pdu(struct cpvt * cpvt, const char * pdu, attribute_unus
 	memcpy(at_cmd[1].data, pdu, length);
 	at_cmd[1].data[length] = 0x1A;
 	at_cmd[1].data[length+1] = 0x0;
-		
+
 	at_cmd[0].length = snprintf(buf, sizeof(buf), "AT+CMGS=%d\r", (int)(pdulen / 2));
 	at_cmd[0].data = ast_strdup(buf);
 	if(!at_cmd[0].data)
 	{
 		ast_free(at_cmd[1].data);
-		return -ENOMEM;		
+		return -ENOMEM;
 	}
-			
+
 /*		ast_debug (5, "[%s] PDU Head '%s'\n", PVT_ID(pvt), buf);
 		ast_debug (5, "[%s] PDU Body '%s'\n", PVT_ID(pvt), at_cmd[1].data);
 */
@@ -300,7 +300,7 @@ EXPORT_DEF int at_enque_sms (struct cpvt* cpvt, const char* destination, const c
 	char buf[1024] = "AT+CMGS=\"";
 	char pdu_buf[2048];
 	pvt_t* pvt = cpvt->pvt;
-	
+
 	at_queue_cmd_t at_cmd[] = {
 		{ CMD_AT_CMGS,    RES_SMS_PROMPT, ATQ_CMD_FLAG_DEFAULT, { ATQ_CMD_TIMEOUT_2S, 0}  , NULL, 0 },
 		{ CMD_AT_SMSTEXT, RES_OK,         ATQ_CMD_FLAG_DEFAULT, { ATQ_CMD_TIMEOUT_40S, 0} , NULL, 0 }
@@ -655,7 +655,7 @@ EXPORT_DEF int at_enque_activate (struct cpvt* cpvt)
 
 	if (cpvt->state != CALL_STATE_ONHOLD && cpvt->state != CALL_STATE_WAITING)
 	{
-		ast_log (LOG_ERROR, "[%s] Imposible activate call idx %d from state '%s'\n", 
+		ast_log (LOG_ERROR, "[%s] Imposible activate call idx %d from state '%s'\n",
 				PVT_ID(cpvt->pvt), cpvt->call_idx, call_state2str(cpvt->state));
 		return -1;
 	}
@@ -811,11 +811,11 @@ EXPORT_DEF int at_enque_hangup (struct cpvt* cpvt, int call_idx)
 		not found yes
 */
 /*
-	static const struct 
+	static const struct
 	{
 		at_cmd_t	cmd;
 		const char	*data;
-	} commands[] = 
+	} commands[] =
 	{
 		{ CMD_AT_CHUP, "AT+CHUP\r" },
 		{ CMD_AT_CHLD_1x, "AT+CHLD=1%d\r" }
@@ -915,4 +915,3 @@ EXPORT_DEF void at_hangup_immediality(struct cpvt* cpvt)
 	if(length > 0)
 		at_write(cpvt->pvt, buf, length);
 }
-
